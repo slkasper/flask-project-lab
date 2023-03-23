@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS houses;
+
+CREATE TABLE IF NOT EXISTS houses (
+    id serial PRIMARY KEY,
+
+);

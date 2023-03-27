@@ -4,8 +4,18 @@ import pandas as pd
 from api.models.property import Property
 import json
 
+from settings import DB_USER, DB_HOST, DB_NAME
+
 def create_app():
     app = Flask(__name__)
+
+    #This is keyword mapping. I don't think it's needed if you use the 
+    # postgres string/url instead
+    # app.config.from_mapping(
+    #     DB_USER=db_user,
+    #     DB_HOST=db_host,
+    #     DB_NAME=db_name
+    # )
     
     def get_df():
         usecols = ["Id", "Neighborhood", "TotalBsmtSF", "1stFlrSF", "2ndFlrSF", "TotRmsAbvGrd",  "SalePrice"]
@@ -17,7 +27,7 @@ def create_app():
         #df2 = df.rename({'a': 'X', 'b': 'Y'}, axis=1)  # new method
         #NOTE, had to use new rename method from here https://stackoverflow.com/questions/11346283/renaming-column-names-in-pandas 
         # not old method from https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rename.html
-
+        
         housing = df.rename({"Id":"id", "1stFlrSF": "firstFlrSF", "2ndFlrSF": "secondFlrSF"}, axis=1)
         return housing
 
@@ -26,10 +36,10 @@ def create_app():
         # Run psql and create the database in postgress, then you will be able to access it in your files!! 
         # Maybe add this to the README.md!!!! <--- The lines below replace manually setting up a postgres db
 
-    #conn_string = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/careers"
     def build_conn():
         #housing = get_df()
-        conn_string = 'postgresql://Sonya@localhost/housing'
+        conn_string = f"postgresql://{DB_USER}@{DB_HOST}/{DB_NAME}"
+        #conn_string = 'postgresql://Sonya@localhost/housing'
         engine = create_engine(conn_string)
         conn = engine.connect()
         #housing.to_sql('housing', conn, if_exists = 'replace')
@@ -51,12 +61,10 @@ def create_app():
     @app.route('/properties')
     def properties():
         conn = build_conn()
-        housing = build_housing()
-        #breakpoint()
+        build_housing()
 
         sql_result = conn.execute('SELECT * FROM housing LIMIT 5;')
         properties = sql_result.fetchall()
-        #breakpoint()
         property_objs = [Property(property).__dict__ for property in properties]
         # use the mass migrate lab to set up these objects...[Venue(venue).__dict__ for venue in venues]
         #return jsonify(property_objs)
@@ -67,9 +75,9 @@ def create_app():
     def show_property(id):
         conn = build_conn()
         build_housing()
-        #breakpoint()
-        sql_result = conn.execute('''SELECT * FROM housing WHERE 'id' = %s Limit 1;''', (id,))
+        sql_result = conn.execute('''SELECT * FROM housing WHERE "Neighborhood" = "CollgCr" Limit 1;''')#, (id,)) # WHERE 'id' = %s
         property = sql_result.fetchone()
+        #breakpoint()
         prop_dict = Property(property).__dict__
         return json.dumps(prop_dict, default=str ) #to fix decimal error in route
 

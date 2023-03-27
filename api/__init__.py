@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask
 from sqlalchemy import create_engine
 import pandas as pd
 from api.models.property import Property
